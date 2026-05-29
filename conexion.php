@@ -2,7 +2,7 @@
 $host = 'localhost';
 $db   = 'tienda_db';
 $user = 'root';
-$pass = '';       // Cambia si tienes contraseña en MySQL Workbench
+$pass = 'BASES202610';       // Cambia si tienes contraseña en MySQL Workbench
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
