@@ -4,9 +4,9 @@ COLLATE utf8mb4_unicode_ci;
 
 USE tienda_db;
 
--- =====================================================
--- TABLA: CATEGORIAS
--- =====================================================
+-- =====================================
+-- CATEGORIAS
+-- =====================================
 
 CREATE TABLE categorias (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -20,9 +20,9 @@ INSERT INTO categorias (nombre, impuesto) VALUES
 ('Supermercado', 0.00),
 ('Aseo', 5.00);
 
--- =====================================================
--- TABLA: EMPAQUES
--- =====================================================
+-- =====================================
+-- EMPAQUES
+-- =====================================
 
 CREATE TABLE empaques (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -34,20 +34,21 @@ INSERT INTO empaques (tipo) VALUES
 ('Plástico'),
 ('Otro');
 
--- =====================================================
--- TABLA: PRODUCTOS
--- =====================================================
+-- =====================================
+-- PRODUCTOS
+-- =====================================
 
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(20) UNIQUE NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     peso DECIMAL(10,2) NOT NULL,
-    cantidad INT DEFAULT 0,
+    cantidad INT NOT NULL DEFAULT 0,
+    stock_minimo INT NOT NULL DEFAULT 5,
     precio_unitario DECIMAL(10,2) NOT NULL,
 
-    empaque_id INT,
-    categoria_id INT,
+    empaque_id INT NOT NULL,
+    categoria_id INT NOT NULL,
 
     FOREIGN KEY (empaque_id)
         REFERENCES empaques(id),
@@ -56,14 +57,9 @@ CREATE TABLE productos (
         REFERENCES categorias(id)
 );
 
--- Stock mínimo requerido
-
-ALTER TABLE productos
-ADD stock_minimo INT DEFAULT 5;
-
--- =====================================================
--- TABLA: PROVEEDORES
--- =====================================================
+-- =====================================
+-- PROVEEDORES
+-- =====================================
 
 CREATE TABLE proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -72,26 +68,28 @@ CREATE TABLE proveedores (
     ciudad VARCHAR(80) NOT NULL
 );
 
--- =====================================================
--- RELACIÓN PRODUCTO - PROVEEDOR
--- =====================================================
+-- =====================================
+-- PRODUCTO - PROVEEDOR
+-- =====================================
 
 CREATE TABLE producto_proveedor (
-    producto_id INT,
-    proveedor_id INT,
+    producto_id INT NOT NULL,
+    proveedor_id INT NOT NULL,
 
     PRIMARY KEY (producto_id, proveedor_id),
 
     FOREIGN KEY (producto_id)
-        REFERENCES productos(id),
+        REFERENCES productos(id)
+        ON DELETE CASCADE,
 
     FOREIGN KEY (proveedor_id)
         REFERENCES proveedores(id)
+        ON DELETE CASCADE
 );
 
--- =====================================================
--- TABLA: CLIENTES
--- =====================================================
+-- =====================================
+-- CLIENTES
+-- =====================================
 
 CREATE TABLE clientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -102,44 +100,55 @@ CREATE TABLE clientes (
     correo VARCHAR(120)
 );
 
--- =====================================================
--- TABLA: VENTAS
--- =====================================================
+-- =====================================
+-- VENTAS
+-- =====================================
 
 CREATE TABLE ventas (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     cliente_id INT NOT NULL,
+
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total DECIMAL(12,2) DEFAULT 0,
+
+    total DECIMAL(12,2) NOT NULL DEFAULT 0,
+
+    estado ENUM('ACTIVA','ANULADA')
+    DEFAULT 'ACTIVA',
 
     FOREIGN KEY (cliente_id)
         REFERENCES clientes(id)
 );
 
--- =====================================================
--- DETALLE DE VENTAS
--- =====================================================
+-- =====================================
+-- DETALLE VENTAS
+-- =====================================
 
 CREATE TABLE venta_detalle (
     id INT AUTO_INCREMENT PRIMARY KEY,
+
     venta_id INT NOT NULL,
     producto_id INT NOT NULL,
 
     cantidad INT NOT NULL,
+
     precio_unitario DECIMAL(10,2) NOT NULL,
+
     impuesto DECIMAL(5,2) DEFAULT 0,
+
     subtotal DECIMAL(12,2) NOT NULL,
 
     FOREIGN KEY (venta_id)
-        REFERENCES ventas(id),
+        REFERENCES ventas(id)
+        ON DELETE CASCADE,
 
     FOREIGN KEY (producto_id)
         REFERENCES productos(id)
 );
 
--- =====================================================
--- COMPRAS A PROVEEDORES / GASTOS
--- =====================================================
+-- =====================================
+-- COMPRAS A PROVEEDORES
+-- =====================================
 
 CREATE TABLE pagos_proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,6 +157,7 @@ CREATE TABLE pagos_proveedores (
     producto_id INT NOT NULL,
 
     cantidad INT NOT NULL,
+
     costo_total DECIMAL(12,2) NOT NULL,
 
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -159,14 +169,15 @@ CREATE TABLE pagos_proveedores (
         REFERENCES productos(id)
 );
 
--- =====================================================
--- PRODUCTOS DAÑADOS O RETIRADOS
--- =====================================================
+-- =====================================
+-- PRODUCTOS DAÑADOS
+-- =====================================
 
 CREATE TABLE productos_danados (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
     producto_id INT NOT NULL,
+
     cantidad INT NOT NULL,
 
     motivo VARCHAR(200),
